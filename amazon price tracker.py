@@ -8,9 +8,9 @@ password = os.environ.get('password')
 myid = os.environ.get('myid')
 
 
-url = input('enter product url ')
-email_id = input('enter your email id').lower()
-desired_price = float(input('enter your desired price'))
+url = input('enter product url: ')
+email_id = input('enter your email id:').lower()
+desired_price = float(input('enter your desired price: '))
 
 
 product_url = url
@@ -22,12 +22,15 @@ response = requests.get(url=product_url, headers={'User-Agent': agent})
 product_data = response.text
 
 soup = BeautifulSoup(product_data, 'html.parser')
-name = soup.find(name='span', id='productTitle').get_text().strip()
-price = soup.find(name='span', class_="a-size-medium a-color-price priceBlockDealPriceString").get_text().strip('₹ ')
+try:
+    price = soup.find(name='span', class_="a-size-medium a-color-price priceBlockDealPriceString").get_text().strip('₹ ')
+except AttributeError:
+    price = soup.find(name='span', id="priceblock_ourprice").get_text().strip('₹ ')
 price = float(price.replace(',', ''))
+print(price)
 if price < desired_price:
     with SMTP('smtp.gmail.com') as connection:
         connection.starttls()
         connection.login(user=myid, password=password)
         connection.sendmail(from_addr=myid, to_addrs=email_id,
-                            msg=f"Subject:Low Price Alert\n\n{name} is at {price}")
+                            msg=f"Subject:Low Price Alert\n\nYour whishlisted product {url} is at {price}")
